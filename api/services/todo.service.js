@@ -126,7 +126,7 @@ function insertTodoTask(newTodoId, inputDate, user_id, result){
         let query = `INSERT INTO todo_task (todo_id, title, description, start_time, end_time, type, is_complete) 
         SELECT ?, tt.title, tt.description, tt.start_time, tt.end_time, tt.type, tt.is_complete 
         FROM todo_task tt JOIN todo t ON tt.todo_id = t.id 
-        WHERE t.day = WEEKDAY(?) and t.date IS NULL AND t.user_id = ?`;
+        WHERE t.day = WEEKDAY(?) and t.date IS NULL AND t.user_id = ?;`;
         sql.query(query, [newTodoId, inputDate, user_id], (err, res) => {
             if(err){
                 console.log("error: ", err);
@@ -138,15 +138,48 @@ function insertTodoTask(newTodoId, inputDate, user_id, result){
     });
 }
 
-function updateTodoTask(updatedTodoTask, result){
-    let query = `UPDATE todo_task SET title = ?, description= ?, start_time = ?, end_time = ? WHERE id = ?`;
-    sql.query(query, [updatedTodoTask.title, updateTodoTask.description, updatedTodoTask.startTime, updatedTodoTask.endTime, updatedTodoTask.id], (err, res) => {
-        if(err){
-            console.log("error: ", err);
-            result(err, null);
-            return;
-        }
-        result(null, {id: updatedTodoTask.id, ...updatedTodoTask});
+function updateTodoTaskfromDefault(updatedTodoTask, date, result){
+    return new Promise((resolve, reject) => {
+        let query = `UPDATE todo_task tt
+        JOIN todo t ON tt.todo_id = t.id
+        SET 
+            tt.title = ?,
+            tt.description = ?,
+            tt.start_time = ?,
+            tt.end_time = ?
+        WHERE tt.start_time = (SELECT start_time FROM todo_task WHERE id = ?)
+        AND tt.end_time = (SELECT end_time FROM todo_task WHERE id = ?)
+        AND t.date = ?;`;
+        sql.query(query, [updatedTodoTask.title, updatedTodoTask.description, updatedTodoTask.startTime, updatedTodoTask.endTime, updatedTodoTask.id, updatedTodoTask.id, date], (err, res) => {
+            if(err){
+                console.log("error: ", err);
+                reject(err, null);
+                return;
+            }
+            resolve(null, {id: updatedTodoTask.id, ...updatedTodoTask});
+        });
+    });
+}
+
+function updateTodoTask(updatedTodoTask, date, result){
+    return new Promise((resolve, reject) => {
+        let query = `UPDATE todo_task tt
+        JOIN todo t ON tt.todo_id = t.id
+        SET 
+            tt.title = ?,
+            tt.description = ?,
+            tt.start_time = ?,
+            tt.end_time = ?
+        WHERE tt.id = ?
+        AND t.date = ?;`;
+        sql.query(query, [updatedTodoTask.title, updatedTodoTask.description, updatedTodoTask.startTime, updatedTodoTask.endTime, updatedTodoTask.id, date], (err, res) => {
+            if(err){
+                console.log("error: ", err);
+                reject(err, null);
+                return;
+            }
+            resolve(null, {id: updatedTodoTask.id, ...updatedTodoTask});
+        });
     });
 }
 
@@ -158,4 +191,6 @@ module.exports = {
     insertTodo,
     insertTodoTask,
     checkTodoIsDefault,
+    updateTodoTaskfromDefault,
+    updateTodoTask
 };
