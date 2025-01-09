@@ -102,10 +102,19 @@ function insertTodo(date, userId, result){
 
 
 // check todo is default or not
-function checkTodoIsDefault(todoTaskId){
+function checkTodoIsDefault(user_id, date){
     return new Promise((resolve, reject) => {
-        let query = `SELECT t.date, t.user_id FROM todo t WHERE t.id IN ( SELECT tt.todo_id FROM todo_task tt WHERE tt.id = ? );`;
-        sql.query(query, [todoTaskId], (err, res) => {
+        let query = `SELECT t.id, t.date, t.user_id 
+        FROM todo t 
+        WHERE t.id IN 
+        ( 
+        SELECT tt.todo_id 
+        FROM todo_task tt 
+        JOIN todo t ON tt.todo_id = t.id 
+        WHERE t.user_id=? 
+        AND t.date = ? 
+        );`;
+        sql.query(query, [user_id, date], (err, res) => {
             if(err){
                 console.log("error: ", err);
                 reject(err);
@@ -138,25 +147,18 @@ function insertTodoTask(newTodoId, inputDate, user_id, result){
     });
 }
 
-function updateTodoTaskfromDefault(updatedTodoTask, date, result){
+function addTodoTask(todoId, newTodoTask, result){
     return new Promise((resolve, reject) => {
-        let query = `UPDATE todo_task tt
-        JOIN todo t ON tt.todo_id = t.id
-        SET 
-            tt.title = ?,
-            tt.description = ?,
-            tt.start_time = ?,
-            tt.end_time = ?
-        WHERE tt.start_time = (SELECT start_time FROM todo_task WHERE id = ?)
-        AND tt.end_time = (SELECT end_time FROM todo_task WHERE id = ?)
-        AND t.date = ?;`;
-        sql.query(query, [updatedTodoTask.title, updatedTodoTask.description, updatedTodoTask.startTime, updatedTodoTask.endTime, updatedTodoTask.id, updatedTodoTask.id, date], (err, res) => {
+        let query = `INSERT INTO todo_task 
+        (todo_id, title, description, start_time, end_time, type) 
+        VALUES (?, ?, ?, ?, ?, ?)`;
+        sql.query(query, [todoId, newTodoTask.title, newTodoTask.description, newTodoTask.startTime, newTodoTask.endTime, newTodoTask.type], (err, res) => {
             if(err){
                 console.log("error: ", err);
                 reject(err, null);
                 return;
             }
-            resolve(null, {id: updatedTodoTask.id, ...updatedTodoTask});
+            resolve(null, {id: res.insertId, ...newTodoTask});
         });
     });
 }
@@ -169,10 +171,12 @@ function updateTodoTask(updatedTodoTask, date, result){
             tt.title = ?,
             tt.description = ?,
             tt.start_time = ?,
-            tt.end_time = ?
-        WHERE tt.id = ?
+            tt.end_time = ?,
+            tt.is_complete = ?
+        WHERE tt.start_time = (SELECT start_time FROM todo_task WHERE id = ?)
+        AND tt.end_time = (SELECT end_time FROM todo_task WHERE id = ?)
         AND t.date = ?;`;
-        sql.query(query, [updatedTodoTask.title, updatedTodoTask.description, updatedTodoTask.startTime, updatedTodoTask.endTime, updatedTodoTask.id, date], (err, res) => {
+        sql.query(query, [updatedTodoTask.title, updatedTodoTask.description, updatedTodoTask.startTime, updatedTodoTask.endTime, updatedTodoTask.isComplete, updatedTodoTask.id, updatedTodoTask.id, date], (err, res) => {
             if(err){
                 console.log("error: ", err);
                 reject(err, null);
@@ -183,14 +187,35 @@ function updateTodoTask(updatedTodoTask, date, result){
     });
 }
 
+function removeTodoTask(task_id, date, result){
+    return new Promise((resolve, reject) => {
+        let query = `DELETE FROM todo_task
+            WHERE id IN (
+                SELECT tt.id FROM todo_task tt
+                INNER JOIN todo t ON tt.todo_id = t.id
+                WHERE tt.start_time = (SELECT start_time FROM todo_task WHERE id = ?)
+                AND tt.end_time = (SELECT end_time FROM todo_task WHERE id = ?)
+                AND t.date = ?)`;
+        sql.query(query, [task_id, task_id, date], (err, res) => {
+            if(err){
+                console.log("error: ", err);
+                reject(err, null);
+                return;
+            }
+            resolve(null);
+        });
+    });
+}
+
 module.exports = {
     insertTodoFromSchedule,
     insertdefaultTodoTask,
     getTodo,
     getTodoTask,
+    addTodoTask,
     insertTodo,
     insertTodoTask,
     checkTodoIsDefault,
-    updateTodoTaskfromDefault,
-    updateTodoTask
+    updateTodoTask,
+    removeTodoTask
 };

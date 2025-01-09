@@ -1,6 +1,15 @@
 const Todo = require('../models/todo.model.js');
 const TodoTask = require('../models/todoTask.model.js');
-const { getTodo, getTodoTask, insertTodo, insertTodoTask, checkTodoIsDefault, updateTodoTask, updateTodoTaskfromDefault } = require('../services/todo.service');
+const { 
+    getTodo, 
+    getTodoTask, 
+    addTodoTask,
+    insertTodo, 
+    insertTodoTask, 
+    checkTodoIsDefault,  
+    updateTodoTask, 
+    removeTodoTask, 
+} = require('../services/todo.service');
 
 // fetch todos for a user on a specific date
 exports.fetchTodos = async (req, res) => {
@@ -33,15 +42,29 @@ exports.fetchTodos = async (req, res) => {
     }
 }
 
-//create a todo task // havent test
+//create a todo task 
 exports.createTodoTask = async (req, res) => {
-    try {
+    try{
+        const userId = req.params.user_id;
+        const inputDate = req.params.date;
         const newTodoTask = req.body;
-        const todoTask = await insertTodoTask(newTodoTask);
-        return res.status(200).json({
-            message: "Successfully created todo task",
-            todoTask: todoTask
-        });
+        const output = await checkTodoIsDefault(userId, inputDate);
+        if (!output) {
+            const newTodoId = await insertTodo(inputDate, userId);
+            const todoTask = await addTodoTask(newTodoId.id, newTodoTask);
+            sleep(3000);
+            return res.status(200).json({
+                message: "Successfully created todo task",
+                todoTask: todoTask
+            });
+        } 
+        if (output.date != null) {
+            const todoTask = await addTodoTask(output.id, newTodoTask);
+            return res.status(200).json({
+                message: "Successfully created todo task",
+                todoTask: newTodoTask
+            });
+        }
     } catch (error) {
         return res.status(500).json({
             message: error.message
@@ -52,21 +75,17 @@ exports.createTodoTask = async (req, res) => {
 //check is todo is default or not
 exports.editTodoTask = async (req, res) => {
     try {
-        const taskId = req.params.task_id;
+        const userId = req.params.user_id;
         const inputDate = req.params.date;
         const updatedTodoTask = req.body;
-        const output = await checkTodoIsDefault(taskId);
+        const output = await checkTodoIsDefault(userId, inputDate);
+        console.log(output);
         if (!output) {
-            return res.status(404).json({
-                message: "Todo not found"
-            });
-        }
-        if (output.date == null) {
-            const newTodoId = await insertTodo(inputDate, output.user_id);
-            const todoTask = await insertTodoTask(newTodoId.id, inputDate, output.user_id);
+            const newTodoId = await insertTodo(inputDate, userId);
+            const todoTask = await insertTodoTask(newTodoId.id, inputDate, userId);
             sleep(3000);
             console.log(updatedTodoTask);
-            const newTodoTask = await updateTodoTaskfromDefault(updatedTodoTask, inputDate);
+            const newTodoTask = await updateTodoTask(updatedTodoTask, inputDate);
             return res.status(200).json({
                 message: "Successfully update todo task",
                 todoTask: todoTask,
@@ -86,35 +105,31 @@ exports.editTodoTask = async (req, res) => {
             message: error.message
         });
     }
-}
-            
-
-// //update a todo task // havent test
-// const editTodoTask = async (req, res) => {
-//     try {
-//         const date = req.params.date;
-//         const updatedTodoTask = req.body;
-//         const todoTask = await updateTodoTask(updatedTodoTask, date);
-//         return res.status(200).json({
-//             message: "Successfully updated todo task",
-//             todoTask: todoTask
-//         });
-//     } catch (error) {
-//         return res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// }
+}       
 
 //delete a todo task //havent test
 exports.deleteTodoTask = async (req, res) => {
     try {
-        const todoTaskId = req.params.id;
-        const todoTask = await removeTodoTask(todoTaskId);
-        return res.status(200).json({
-            message: "Successfully deleted todo task",
-            todoTask: todoTask
-        });
+        const userId = req.params.user_id;
+        const taskId = req.params.task_id;
+        const inputDate = req.params.date;
+        const output = await checkTodoIsDefault(userId, inputDate);
+        console.log(output);
+        if (!output) {
+            const newTodoId = await insertTodo(inputDate, userId);
+            const todoTask = await insertTodoTask(newTodoId.id, inputDate, userId);
+            sleep(3000);
+            removeTodoTask(taskId, inputDate);
+            return res.status(200).json({
+                message: "Todo Task deleted successfully."
+            });
+        } 
+        if (output.date != null) {
+            removeTodoTask(taskId, inputDate);
+            return res.status(200).json({
+                message: "Todo Task deleted successfully.",
+            });
+        }
     } catch (error) {
         return res.status(500).json({
             message: error.message
