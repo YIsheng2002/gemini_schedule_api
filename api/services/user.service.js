@@ -22,17 +22,24 @@ function getUserById(user_id){
 }
 
 
-function addUserInformation(user_id, area_of_living, health_history, no_of_family_member, occupation_time, occupation_type){
+function addUserInformation(user_id, area_of_living, health_history, no_of_family_member, occupation_time, occupation_type, goal_calories){
     let query = `
-    INSERT INTO user (area_of_living, health_history, no_of_family_member, occupation_time, occupation_type) VALUES (?,?,?,?,?)
+    UPDATE user 
+    SET 
+        area_of_living = ?, 
+        health_history = ?, 
+        no_of_family_member = ?, 
+        occupation_time = ?, 
+        occupation_type = ?, 
+        goal_calories = ?
     WHERE id = ?`;
-    connection.query(query, [area_of_living, health_history, no_of_family_member, occupation_time, occupation_type, user_id], (err, res) => {
+    sql.query(query, [area_of_living, health_history, no_of_family_member, occupation_time, occupation_type, goal_calories, user_id ], (err, res) => {
         if(err){
             console.log("error: ", err);
             result(err, null);
             return;
         }
-        result(null, {id: res.insertId, ...newScheduleTask});
+        result(null);
     });
 }
 

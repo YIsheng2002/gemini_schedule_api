@@ -5,6 +5,7 @@ const { Schedule } = require("../models/schedule.model.js");
 const { ScheduleTask } = require("../models/scheduleTask.model.js");
 const { insertScheduleFromGemini, insertScheduleTask } = require("../services/schedule.service.js");
 const { insertTodoFromSchedule, insertdefaultTodoTask } = require("../services/todo.service.js");
+const { addUserInformation } = require("../services/user.service.js");
 const { User } = require("../models/user.model.js")
 
 // Array of weekdays
@@ -125,6 +126,18 @@ const getScheduleController = async (req, res) => {
             }
             );
         }
+
+        //add user information and goal calories to database
+        const goal_calories = jsonOutput.calories.intake;
+        addUserInformation(user.id, user.area_of_living, user.health_history, user.no_of_family_member, user.occupation_time, user.occupation_type, goal_calories, (err, data) => {
+            if (err) {
+                return res.status(500).json({
+                    message: err.message,
+                });
+            }
+            console.log(data);
+        }
+        );
         
         return res.status(200).json({
             "response": jsonOutput

@@ -22,15 +22,10 @@ exports.fetchUser = async (req, res)=>{
     }
 }
 
-// add user info // havent testing
+// add user information
 exports.addUserGenInformation = async (req, res)=>{
     try {
-        const updatedTodoTask = req.body;
-        const todoTask = await updateTodoTask(updatedTodoTask);
-        return res.status(200).json({
-            message: "Successfully updated todo task",
-            todoTask: todoTask
-        });
+        
     } catch (error) {
         return res.status(500).json({
             message: error.message
