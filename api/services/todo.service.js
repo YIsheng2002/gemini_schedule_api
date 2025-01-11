@@ -151,7 +151,7 @@ function addTodoTask(todoId, newTodoTask, result){
     return new Promise((resolve, reject) => {
         let query = `INSERT INTO todo_task 
         (todo_id, title, description, start_time, end_time, type) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        VALUES (?, ?, ?, ?, ?, ?)`;
         sql.query(query, [todoId, newTodoTask.title, newTodoTask.description, newTodoTask.startTime, newTodoTask.endTime, newTodoTask.type, newTodoTask.isComplete], (err, res) => {
             if(err){
                 console.log("error: ", err);
