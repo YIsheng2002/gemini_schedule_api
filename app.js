@@ -7,6 +7,7 @@ const mysql = require('mysql');
 const scheduleRoutes = require('./api/routes/schedule.route');
 const todoRoutes = require('./api/routes/todo.route');
 const userRoutes = require('./api/routes/user.route');
+const performanceRoutes = require('./api/routes/performance.route');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 app.use('/api/v1', scheduleRoutes);
 app.use('/api/v1', todoRoutes);
 app.use('/api/v1', userRoutes);
+app.use('/api/v1', performanceRoutes);
 
 // error handling for routes not found
 app.use((req,res,next)=>{
