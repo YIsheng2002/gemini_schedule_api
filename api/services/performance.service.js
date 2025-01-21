@@ -4,12 +4,15 @@ const connection = require('../models/db');
 function getDailyPerformance(userId, date){
     return new Promise((resolve, reject) => {
         let query = `
-            SELECT * FROM daily_performance 
-            WHERE user_id = ?
-            AND date = DATE_FORMAT(?, '%Y-%m-%d');
+            SELECT ? as date, 
+            COUNT(CASE WHEN type != 'c' THEN 1 END) as total_tasks,
+            COUNT(CASE WHEN type != 'c' AND is_complete = true THEN 1 END) as completed_tasks, 
+            ? as user_id 
+            FROM todo_task tt JOIN todo t ON t.id = tt.todo_id 
+            WHERE user_id = ? AND date = ?;
         `;
         
-        connection.query(query, [userId, date], (err, res) => {
+        connection.query(query, [date, userId, date, date], (err, res) => {
             if(err){
                 console.log("error: ", err);
                 reject(err);
