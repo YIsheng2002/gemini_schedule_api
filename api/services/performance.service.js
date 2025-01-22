@@ -37,8 +37,6 @@ function getMonthlyPerformance(userId, date){
         let query = `
             SELECT * FROM daily_performance 
             WHERE user_id = ?
-            AND YEAR(date) = YEAR(?)
-            AND MONTH(date) = MONTH(?);
         `;
         
         connection.query(query, [userId, date, date], (err, res) => {
