@@ -32,14 +32,14 @@ exports.fetchDailyPerformance = async (req, res) => {
 // fetch monthly performance for a user
 exports.fetchMonthlyPerformance = async (req, res) => {
     const userId = req.params.user_id;
-    const month = req.params.month;
-    if (!userId || !month) {
+    const date = req.params.date;
+    if (!userId || !date) {
         return res.status(400).json({
             message: "Invalid request"
         });
     }
     try {
-        const performance = await getMonthlyPerformance(userId, month);
+        const performance = await getMonthlyPerformance(userId, date);
         if (!performance) {
             return res.status(404).json({
                 message: "Performance not found"
